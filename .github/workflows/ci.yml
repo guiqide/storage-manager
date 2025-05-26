@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Use Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18.x'
         cache: 'npm'
@@ -23,23 +23,15 @@ jobs:
       run: npm ci
       
     - name: Run tests
-      run: npm test
-      
-    - name: Verify coverage files
-      run: |
-        echo "Checking coverage files..."
-        ls -la coverage/
-        test -f coverage/lcov.info && echo "lcov.info exists" || echo "lcov.info not found"
-      
+      run: npx jest --coverage
+
     - name: Build
       run: npm run build
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage/lcov.info
+        slug: guiqide/storage-manager
         flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: true
         verbose: true
