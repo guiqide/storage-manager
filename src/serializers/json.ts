@@ -6,7 +6,6 @@ export class JsonSerializer<T> implements Serializer<T> {
       return JSON.stringify(value);
     } catch (error: unknown) {
       if (error instanceof TypeError && error.message.includes('circular')) {
-        debugger;
         // 处理循环引用
         const cache = new Set();
         return JSON.stringify(value, (key, value) => {

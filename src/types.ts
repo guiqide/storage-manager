@@ -43,3 +43,33 @@ export class JSONSerializer implements Serializer {
     return JSON.parse(value);
   }
 }
+
+/**
+ * 错误类型枚举
+ */
+export enum ErrorType {
+  Error = 'error',
+  Warning = 'warning',
+  Info = 'info'
+}
+
+/**
+ * 全局错误处理函数
+ * @param err 错误对象
+ * @param type 错误类型
+ */
+export function handleStorageError(err: unknown, type: ErrorType = ErrorType.Error) {
+  const message = `[Storage ${type}] ${err instanceof Error ? err.message : String(err)}`;
+  
+  switch (type) {
+    case ErrorType.Error:
+      console.error(message);
+      break;
+    case ErrorType.Warning:
+      console.warn(message);
+      break;
+    case ErrorType.Info:
+      console.log(message);
+      break;
+  }
+}

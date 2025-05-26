@@ -1,4 +1,4 @@
-import { StorageEngine } from '../types';
+import { ErrorType, StorageEngine, handleStorageError } from '../types';
 
 /**
  * 基于内存的存储引擎类
@@ -6,7 +6,7 @@ import { StorageEngine } from '../types';
  */
 export class MemoryStorageEngine implements StorageEngine {
   readonly isAsync = false;
-  private storage: Map<string, string>;
+  private storage: Map<string, string> = new Map();
 
   constructor() {
     this.storage = new Map();
@@ -16,7 +16,7 @@ export class MemoryStorageEngine implements StorageEngine {
     try {
       return this.storage.get(key) || null;
     } catch (error) {
-      console.error(`MemoryStorage getItem error for key ${key}:`, error);
+      handleStorageError(error, ErrorType.Error);
       return null;
     }
   }
@@ -25,7 +25,7 @@ export class MemoryStorageEngine implements StorageEngine {
     try {
       this.storage.set(key, value);
     } catch (error) {
-      console.error(`MemoryStorage setItem error for key ${key}:`, error);
+      handleStorageError(error, ErrorType.Error);
     }
   }
 
@@ -33,7 +33,7 @@ export class MemoryStorageEngine implements StorageEngine {
     try {
       this.storage.delete(key);
     } catch (error) {
-      console.error(`MemoryStorage removeItem error for key ${key}:`, error);
+      handleStorageError(error, ErrorType.Error);
     }
   }
 
@@ -41,7 +41,7 @@ export class MemoryStorageEngine implements StorageEngine {
     try {
       this.storage.clear();
     } catch (error) {
-      console.error('MemoryStorage clear error:', error);
+      handleStorageError(error, ErrorType.Error);
     }
   }
 } 

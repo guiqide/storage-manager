@@ -1,5 +1,7 @@
 # Storage Manager
 
+[![codecov](https://codecov.io/gh/guiqide/storage-manager/branch/main/graph/badge.svg)](https://codecov.io/gh/guiqide/storage-manager)
+
 A flexible storage manager with customizable storage engines and serializers.
 
 ## Installation

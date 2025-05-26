@@ -1,4 +1,4 @@
-import { StorageEngine } from '../types';
+import { ErrorType, StorageEngine, handleStorageError } from '../types';
 
 export class LocalStorageEngine implements StorageEngine {
   readonly isAsync = false;
@@ -7,7 +7,7 @@ export class LocalStorageEngine implements StorageEngine {
     try {
       return localStorage.getItem(key);
     } catch (error) {
-      console.error('LocalStorage getItem error:', error);
+      handleStorageError(error, ErrorType.Error);
       return null;
     }
   }
@@ -16,7 +16,7 @@ export class LocalStorageEngine implements StorageEngine {
     try {
       localStorage.setItem(key, value);
     } catch (error) {
-      console.error('LocalStorage setItem error:', error);
+      handleStorageError(error, ErrorType.Error);
     }
   }
 
@@ -24,7 +24,7 @@ export class LocalStorageEngine implements StorageEngine {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.error('LocalStorage removeItem error:', error);
+      handleStorageError(error, ErrorType.Error);
     }
   }
 
@@ -32,7 +32,7 @@ export class LocalStorageEngine implements StorageEngine {
     try {
       localStorage.clear();
     } catch (error) {
-      console.error('LocalStorage clear error:', error);
+      handleStorageError(error, ErrorType.Error);
     }
   }
 }

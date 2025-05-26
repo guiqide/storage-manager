@@ -1,6 +1,6 @@
 // src/storage.ts
 import { MemoryStorageEngine } from './engines/memoryStorage';
-import { AsyncStorageEngine, JSONSerializer, Serializer, StorageConfig, StorageEngine, SyncStorageEngine } from './types';
+import { AsyncStorageEngine, ErrorType, JSONSerializer, Serializer, StorageConfig, StorageEngine, SyncStorageEngine, handleStorageError } from './types';
 
 /**
  * 存储管理器类
@@ -56,12 +56,23 @@ export class StorageManager {
    */
   set<T>(key: string, value: T): void | Promise<void> {
     const fullKey = this.prefix + key;
-    const serializedValue = this.serializer.serialize(value);
-    
-    if (this.engine.isAsync) {
-      return (this.engine as AsyncStorageEngine).setItem(fullKey, serializedValue);
-    } else {
-      (this.engine as SyncStorageEngine).setItem(fullKey, serializedValue);
+    try {
+      const serializedValue = this.serializer.serialize(value);
+      
+      if (this.engine.isAsync) {
+        return (this.engine as AsyncStorageEngine).setItem(fullKey, serializedValue)
+          .catch(error => {
+            handleStorageError(error, ErrorType.Warning);
+          });
+      } else {
+        try {
+          (this.engine as SyncStorageEngine).setItem(fullKey, serializedValue);
+        } catch (error) {
+          handleStorageError(error, ErrorType.Warning);
+        }
+      }
+    } catch (error) {
+      handleStorageError(error, ErrorType.Warning);
     }
   }
 
@@ -76,12 +87,32 @@ export class StorageManager {
     
     if (this.engine.isAsync) {
       return (this.engine as AsyncStorageEngine).getItem(fullKey)
-        .then(value => value ? this.serializer.deserialize(value) : defaultValue);
+        .then(value => {
+          try {
+            return value ? this.serializer.deserialize(value) : defaultValue;
+          } catch (error) {
+            handleStorageError(error, ErrorType.Warning);
+            return defaultValue;
+          }
+        })
+        .catch(error => {
+          handleStorageError(error, ErrorType.Warning);
+          return defaultValue;
+        });
     } else {
-      const value = (this.engine as SyncStorageEngine).getItem(fullKey);
       try {
-        return value ? this.serializer.deserialize(value) : defaultValue;
+        const value = (this.engine as SyncStorageEngine).getItem(fullKey);
+        if (!value) {
+          return defaultValue;
+        }
+        try {
+          return this.serializer.deserialize(value);
+        } catch (error) {
+          handleStorageError(error, ErrorType.Warning);
+          return defaultValue;
+        }
       } catch (error) {
+        handleStorageError(error, ErrorType.Warning);
         return defaultValue;
       }
     }
@@ -95,9 +126,16 @@ export class StorageManager {
     const fullKey = this.prefix + key;
     
     if (this.engine.isAsync) {
-      return (this.engine as AsyncStorageEngine).removeItem(fullKey);
+      return (this.engine as AsyncStorageEngine).removeItem(fullKey)
+        .catch(error => {
+          handleStorageError(error, ErrorType.Warning);
+        });
     } else {
-      (this.engine as SyncStorageEngine).removeItem(fullKey);
+      try {
+        (this.engine as SyncStorageEngine).removeItem(fullKey);
+      } catch (error) {
+        handleStorageError(error, ErrorType.Warning);
+      }
     }
   }
 
@@ -106,9 +144,16 @@ export class StorageManager {
    */
   clear(): void | Promise<void> {
     if (this.engine.isAsync) {
-      return (this.engine as AsyncStorageEngine).clear();
+      return (this.engine as AsyncStorageEngine).clear()
+        .catch(error => {
+          handleStorageError(error, ErrorType.Warning);
+        });
     } else {
-      (this.engine as SyncStorageEngine).clear();
+      try {
+        (this.engine as SyncStorageEngine).clear();
+      } catch (error) {
+        handleStorageError(error, ErrorType.Warning);
+      }
     }
   }
 }

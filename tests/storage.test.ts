@@ -1,4 +1,6 @@
 // tests/storage.test.ts
+import "core-js/stable/structured-clone";
+import "fake-indexeddb/auto";
 import {
   DateSerializer,
   IndexedDBStorageEngine,
@@ -136,9 +138,7 @@ describe('StorageManager', () => {
 
     test('should handle deserialization error', () => {
       // 模拟无效的 JSON 字符串
-      debugger;
       mockLocalStorage['test'] = 'invalid json';
-      console.log('---', storage.get('test', 'default'));
       expect(storage.get('test', 'default')).toBe('default');
     });
   });
@@ -245,7 +245,6 @@ describe('StorageManager', () => {
 
     test('should store and retrieve data using sessionStorage', () => {
       const testData = { session: 'data' };
-      debugger
       sessionStorage.set('sessionKey', testData);
       expect(sessionStorage.get('sessionKey', {})).toEqual(testData);
       expect(mockSessionStorage['sessionKey']).toBe(JSON.stringify(testData));
@@ -319,11 +318,18 @@ describe('StorageManager', () => {
       const circular: any = {};
       circular.self = circular;
       
+      // 保存原始的 JSON.stringify 实现
+      const originalStringify = JSON.stringify;
+      
+      // 模拟 JSON.stringify 错误
       jest.spyOn(JSON, 'stringify').mockImplementation(() => {
         throw new Error('Circular reference');
       });
 
       expect(() => memoryStorage.set('test', circular)).not.toThrow();
+
+      // 恢复原始的 JSON.stringify 实现
+      JSON.stringify = originalStringify;
     });
 
     test('should handle deserialization errors', () => {
@@ -356,53 +362,10 @@ describe('StorageManager', () => {
     let indexedDBStorage: StorageManager;
     let indexedDBEngine: IndexedDBStorageEngine;
 
-    beforeEach(() => {
-      // 模拟 IndexedDB
-      const mockIndexedDB = {
-        open: jest.fn().mockImplementation((dbName, version) => {
-          const request = {
-            onerror: null as (() => void) | null,
-            onsuccess: null as ((event: { target: any }) => void) | null,
-            onupgradeneeded: null as (() => void) | null,
-            result: {
-              createObjectStore: jest.fn(),
-              objectStoreNames: { contains: jest.fn().mockReturnValue(false) },
-              transaction: jest.fn().mockReturnValue({
-                objectStore: jest.fn().mockReturnValue({
-                  get: jest.fn().mockReturnValue({
-                    onsuccess: null as (() => void) | null,
-                    onerror: null as (() => void) | null,
-                    result: null
-                  }),
-                  put: jest.fn().mockReturnValue({
-                    onsuccess: null as (() => void) | null,
-                    onerror: null as (() => void) | null
-                  }),
-                  delete: jest.fn().mockReturnValue({
-                    onsuccess: null as (() => void) | null,
-                    onerror: null as (() => void) | null
-                  }),
-                  clear: jest.fn().mockReturnValue({
-                    onsuccess: null as (() => void) | null,
-                    onerror: null as (() => void) | null
-                  })
-                })
-              })
-            }
-          };
-          setTimeout(() => {
-            if (request.onsuccess) {
-              request.onsuccess({ target: request });
-            }
-          }, 0);
-          return request;
-        })
-      };
-
-      Object.defineProperty(window, 'indexedDB', {
-        value: mockIndexedDB,
-        writable: true
-      });
+    beforeEach(async () => {
+      // 使用 fake-indexeddb
+      // require('core-js/stable/structured-clone');
+      // require('fake-indexeddb/auto');
 
       indexedDBEngine = new IndexedDBStorageEngine({
         dbName: 'test-db',
@@ -413,6 +376,18 @@ describe('StorageManager', () => {
         engine: indexedDBEngine,
         serializer: new JsonSerializer()
       });
+
+      // 等待 IndexedDB 初始化完成
+      await new Promise(resolve => setTimeout(resolve, 100)); // 增加等待时间
+    });
+
+    afterEach(async () => {
+      // 清理数据库
+      await indexedDBStorage.clear();
+      // 关闭数据库连接
+      if (indexedDBEngine['db']) {
+        indexedDBEngine['db'].close();
+      }
     });
 
     test('should store and retrieve data using IndexedDB', async () => {
@@ -446,24 +421,11 @@ describe('StorageManager', () => {
     });
 
     test('should handle errors gracefully', async () => {
-      const mockError = new Error('IndexedDB error');
-      const mockRequest = {
-        onerror: null as (() => void) | null,
-        onsuccess: null as (() => void) | null,
-        onupgradeneeded: null as (() => void) | null,
-        error: mockError
-      };
-
-      (window.indexedDB.open as jest.Mock).mockImplementationOnce(() => {
-        setTimeout(() => {
-          if (mockRequest.onerror) {
-            mockRequest.onerror();
-          }
-        }, 0);
-        return mockRequest;
+      // 使用无效的数据库名称来触发错误
+      const errorEngine = new IndexedDBStorageEngine({
+        dbName: '',  // 空字符串会触发错误
+        storeName: 'test-store'
       });
-
-      const errorEngine = new IndexedDBStorageEngine();
       const errorStorage = StorageManager.create({
         engine: errorEngine,
         serializer: new JsonSerializer()
@@ -476,11 +438,11 @@ describe('StorageManager', () => {
 
     test('should maintain data isolation between instances', async () => {
       const storage1 = StorageManager.create({
-        engine: new IndexedDBStorageEngine({ dbName: 'db1' }),
+        engine: new IndexedDBStorageEngine({ dbName: 'db1', storeName: 'store' }),
         serializer: new JsonSerializer()
       });
       const storage2 = StorageManager.create({
-        engine: new IndexedDBStorageEngine({ dbName: 'db2' }),
+        engine: new IndexedDBStorageEngine({ dbName: 'db2', storeName: 'store' }),
         serializer: new JsonSerializer()
       });
 
