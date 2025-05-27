@@ -8,11 +8,11 @@ import {
   LocalStorageEngine,
   MemoryStorageEngine,
   SessionStorageEngine,
-  StorageManager
+  StorageEngines
 } from '../src';
 
-describe('StorageManager', () => {
-  let storage: StorageManager;
+describe('StorageEngines', () => {
+  let storage: StorageEngines;
   let mockLocalStorage: { [key: string]: string };
   let mockSessionStorage: { [key: string]: string };
 
@@ -55,7 +55,7 @@ describe('StorageManager', () => {
       writable: true,
     });
 
-    storage = StorageManager.create({
+    storage = StorageEngines.create({
       engine: new LocalStorageEngine(),
       serializer: new JsonSerializer()
     });
@@ -68,11 +68,11 @@ describe('StorageManager', () => {
   // 测试实例创建
   describe('Instance Creation', () => {
     test('should create different instances', () => {
-      const instance1 = StorageManager.create({
+      const instance1 = StorageEngines.create({
         engine: new LocalStorageEngine(),
         serializer: new JsonSerializer()
       });
-      const instance2 = StorageManager.create({
+      const instance2 = StorageEngines.create({
         engine: new LocalStorageEngine(),
         serializer: new JsonSerializer()
       });
@@ -83,7 +83,7 @@ describe('StorageManager', () => {
     test('should create instance with custom configuration', () => {
       const customEngine = new SessionStorageEngine();
       const customSerializer = new JsonSerializer();
-      const instance = StorageManager.create({
+      const instance = StorageEngines.create({
         engine: customEngine,
         serializer: customSerializer
       });
@@ -194,7 +194,7 @@ describe('StorageManager', () => {
     });
 
     test('should create new instance with different engine', () => {
-      const sessionStorage = StorageManager.create({
+      const sessionStorage = StorageEngines.create({
         engine: new SessionStorageEngine(),
         serializer: new JsonSerializer()
       });
@@ -234,10 +234,10 @@ describe('StorageManager', () => {
 
   // 测试 SessionStorage 引擎
   describe('SessionStorage Engine', () => {
-    let sessionStorage: StorageManager;
+    let sessionStorage: StorageEngines;
 
     beforeEach(() => {
-      sessionStorage = StorageManager.create({
+      sessionStorage = StorageEngines.create({
         engine: new SessionStorageEngine(),
         serializer: new JsonSerializer()
       });
@@ -269,12 +269,12 @@ describe('StorageManager', () => {
 
   // 测试 MemoryStorage 引擎
   describe('MemoryStorage Engine', () => {
-    let memoryStorage: StorageManager;
+    let memoryStorage: StorageEngines;
     let memoryEngine: MemoryStorageEngine;
 
     beforeEach(() => {
       memoryEngine = new MemoryStorageEngine();
-      memoryStorage = StorageManager.create({
+      memoryStorage = StorageEngines.create({
         engine: memoryEngine,
         serializer: new JsonSerializer()
       });
@@ -287,11 +287,11 @@ describe('StorageManager', () => {
     });
 
     test('should maintain separate storage instances', () => {
-      const storage1 = StorageManager.create({
+      const storage1 = StorageEngines.create({
         engine: new MemoryStorageEngine(),
         serializer: new JsonSerializer()
       });
-      const storage2 = StorageManager.create({
+      const storage2 = StorageEngines.create({
         engine: new MemoryStorageEngine(),
         serializer: new JsonSerializer()
       });
@@ -359,7 +359,7 @@ describe('StorageManager', () => {
 
   // 测试 IndexedDB 引擎
   describe('IndexedDB Engine', () => {
-    let indexedDBStorage: StorageManager;
+    let indexedDBStorage: StorageEngines;
     let indexedDBEngine: IndexedDBStorageEngine;
 
     beforeEach(async () => {
@@ -372,7 +372,7 @@ describe('StorageManager', () => {
         storeName: 'test-store',
         version: 1
       });
-      indexedDBStorage = StorageManager.create({
+      indexedDBStorage = StorageEngines.create({
         engine: indexedDBEngine,
         serializer: new JsonSerializer()
       });
@@ -426,7 +426,7 @@ describe('StorageManager', () => {
         dbName: '',  // 空字符串会触发错误
         storeName: 'test-store'
       });
-      const errorStorage = StorageManager.create({
+      const errorStorage = StorageEngines.create({
         engine: errorEngine,
         serializer: new JsonSerializer()
       });
@@ -437,11 +437,11 @@ describe('StorageManager', () => {
     });
 
     test('should maintain data isolation between instances', async () => {
-      const storage1 = StorageManager.create({
+      const storage1 = StorageEngines.create({
         engine: new IndexedDBStorageEngine({ dbName: 'db1', storeName: 'store' }),
         serializer: new JsonSerializer()
       });
-      const storage2 = StorageManager.create({
+      const storage2 = StorageEngines.create({
         engine: new IndexedDBStorageEngine({ dbName: 'db2', storeName: 'store' }),
         serializer: new JsonSerializer()
       });

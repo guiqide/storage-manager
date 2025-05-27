@@ -3,9 +3,9 @@ import { MemoryStorageEngine } from './engines/memoryStorage';
 import { AsyncStorageEngine, ErrorType, JSONSerializer, Serializer, StorageConfig, StorageEngine, SyncStorageEngine, handleStorageError } from './types';
 
 /**
- * 存储管理器类
+ * 存储引擎类
  */
-export class StorageManager {
+export class StorageEngines {
   private engine: StorageEngine;
   private serializer: Serializer;
   private prefix: string;
@@ -21,12 +21,12 @@ export class StorageManager {
   }
 
   /**
-   * 创建存储管理器实例
+   * 创建存储引擎实例
    * @param config 配置选项
-   * @returns StorageManager实例
+   * @returns StorageEngines实例
    */
-  static create(config: StorageConfig = {}): StorageManager {
-    return new StorageManager({
+  static create(config: StorageConfig = {}): StorageEngines {
+    return new StorageEngines({
       engine: config.engine || new MemoryStorageEngine(),
       serializer: config.serializer || new JSONSerializer(),
       prefix: config.prefix || ''
@@ -34,7 +34,7 @@ export class StorageManager {
   }
 
   /**
-   * 配置存储管理器
+   * 配置存储引擎
    * @param config 配置选项
    */
   configure(config: { engine?: StorageEngine; serializer?: Serializer; prefix?: string }): void {
