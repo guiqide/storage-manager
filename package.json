@@ -1,6 +1,6 @@
 {
   "name": "@guiqide/storage-engines",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A flexible storage manager with customizable storage engines and serializers",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

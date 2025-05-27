@@ -6,11 +6,11 @@
 
 ## 版本
 
-当前版本：2.0.0
+当前版本：2.0.1
 
-主要更新：
-- 重命名 StorageManager 为 StorageEngines
-- 更新包名为 @guiqide/storage-engines
+更新历史：
+- 2.0.1: 完善序列化器文档
+- 2.0.0: 重命名 StorageManager 为 StorageEngines，更新包名为 @guiqide/storage-engines
 
 ## 安装
 
@@ -56,6 +56,83 @@ storage.configure({
 - `SessionStorageEngine`: 使用 sessionStorage 存储数据
 - `MemoryStorageEngine`: 使用内存存储数据（不持久化）
 - `IndexedDBStorageEngine`: 使用 IndexedDB 存储数据（支持大量数据）
+
+## 支持的序列化器
+
+### JsonSerializer
+
+默认的序列化器，支持所有可 JSON 序列化的数据类型。
+
+```typescript
+import { StorageEngines, JsonSerializer } from '@guiqide/storage-engines';
+
+const storage = StorageEngines.create({
+  serializer: new JsonSerializer()
+});
+
+// 支持的数据类型
+storage.set('string', 'hello');
+storage.set('number', 42);
+storage.set('boolean', true);
+storage.set('array', [1, 2, 3]);
+storage.set('object', { key: 'value' });
+storage.set('null', null);
+
+// 自动处理循环引用
+const circular: any = { name: 'circular' };
+circular.self = circular;
+storage.set('circular', circular); // 不会抛出错误
+```
+
+### DateSerializer
+
+专门用于处理 Date 类型的序列化器。
+
+```typescript
+import { StorageEngines, DateSerializer } from '@guiqide/storage-engines';
+
+const storage = StorageEngines.create({
+  serializer: new DateSerializer()
+});
+
+// 存储日期
+const date = new Date('2024-01-01');
+storage.set('date', date);
+
+// 获取日期
+const retrievedDate = storage.get('date', new Date());
+console.log(retrievedDate instanceof Date); // true
+console.log(retrievedDate.getTime() === date.getTime()); // true
+```
+
+### 自定义序列化器
+
+您可以创建自己的序列化器来处理特殊的数据类型。
+
+```typescript
+import { Serializer } from '@guiqide/storage-engines';
+
+// 创建一个处理 Map 类型的序列化器
+class MapSerializer implements Serializer<Map<any, any>> {
+  serialize(value: Map<any, any>): string {
+    return JSON.stringify(Array.from(value.entries()));
+  }
+
+  deserialize(value: string): Map<any, any> {
+    return new Map(JSON.parse(value));
+  }
+}
+
+const storage = StorageEngines.create({
+  serializer: new MapSerializer()
+});
+
+// 使用 Map 类型
+const map = new Map([['key1', 'value1'], ['key2', 'value2']]);
+storage.set('map', map);
+const retrievedMap = storage.get('map', new Map());
+console.log(retrievedMap instanceof Map); // true
+```
 
 ## 特性
 
